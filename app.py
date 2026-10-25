@@ -3,21 +3,20 @@ from transformers import pipeline
 
 st.set_page_config(
     page_title="LLM Text Toolkit",
-    page_icon="🤖",
-    layout="centered"
+    page_icon="🤖"
 )
 
 st.title("🤖 LLM Text Toolkit")
-st.write("### Hugging Face Pipelines")
+st.write("Hugging Face Pipelines")
 st.write(
-    "Perform summarization, translation, "
-    "sentiment analysis and question answering."
+    "Summarization | Translation | "
+    "Sentiment Analysis | Question Answering"
 )
 
 st.divider()
 
 task = st.selectbox(
-    "Choose an NLP Task",
+    "Choose a task",
     [
         "Summarization",
         "Translation",
@@ -63,23 +62,18 @@ def load_model(task_name):
 
 if task == "Summarization":
 
-    st.subheader("📝 Text Summarization")
-
     text = st.text_area(
         "Enter a paragraph",
-        height=200,
-        placeholder="Enter a long paragraph here..."
+        height=200
     )
 
-    if st.button("Summarize", use_container_width=True):
+    if st.button("Summarize"):
 
         if text.strip():
 
             try:
-                with st.spinner("Generating summary..."):
-
+                with st.spinner("Summarizing..."):
                     model = load_model(task)
-
                     result = model(
                         text,
                         max_length=100,
@@ -88,14 +82,12 @@ if task == "Summarization":
                         truncation=True
                     )
 
-                st.success("Summary generated!")
+                st.subheader("Summary")
                 st.write(result[0]["summary_text"])
 
             except Exception as e:
-                st.error("Unable to summarize the text.")
-                st.info(
-                    "Please check the app logs if the error continues."
-                )
+                st.error("Summarization failed.")
+                st.code(str(e))
 
         else:
             st.warning("Please enter a paragraph.")
@@ -103,77 +95,60 @@ if task == "Summarization":
 
 elif task == "Translation":
 
-    st.subheader("🌐 English to French Translation")
-
     text = st.text_area(
         "Enter English text",
-        height=150,
-        placeholder="I love learning Artificial Intelligence."
+        height=150
     )
 
-    if st.button("Translate", use_container_width=True):
+    if st.button("Translate"):
 
         if text.strip():
 
             try:
                 with st.spinner("Translating..."):
-
                     model = load_model(task)
                     result = model(
                         text,
                         max_length=200
                     )
 
-                st.success("Translation completed!")
+                st.subheader("French Translation")
                 st.write(result[0]["translation_text"])
 
-            except Exception:
-                st.error(
-                    "Translation failed. Please check the app logs."
-                )
+            except Exception as e:
+                st.error("Translation failed.")
+                st.code(str(e))
 
         else:
-            st.warning("Please enter some text.")
+            st.warning("Please enter text.")
 
 
 elif task == "Sentiment Analysis":
 
-    st.subheader("❤️ Sentiment Analysis")
-
     text = st.text_area(
         "Enter a sentence",
-        height=120,
-        placeholder="I love this product!"
+        height=120
     )
 
-    if st.button("Analyze Sentiment", use_container_width=True):
+    if st.button("Analyze Sentiment"):
 
         if text.strip():
 
             try:
-                with st.spinner("Analyzing sentiment..."):
-
+                with st.spinner("Analyzing..."):
                     model = load_model(task)
                     result = model(text)
 
-                label = result[0]["label"]
-                score = result[0]["score"]
-
-                st.success("Analysis completed!")
-
-                if label == "POSITIVE":
-                    st.success("Sentiment: Positive 😊")
-                else:
-                    st.error("Sentiment: Negative 😞")
-
-                st.write("Confidence Score:", round(score, 4))
-
-                st.progress(float(score))
-
-            except Exception:
-                st.error(
-                    "Sentiment analysis failed. Check the app logs."
+                st.subheader("Sentiment")
+                st.write("Label:", result[0]["label"])
+                st.write(
+                    "Confidence:",
+                    round(result[0]["score"], 4)
                 )
+
+            except Exception as e:
+                st.error("Sentiment analysis failed.")
+                st.code(str(e))
 
         else:
             st.warning("Please enter a sentence.")
@@ -181,58 +156,41 @@ elif task == "Sentiment Analysis":
 
 elif task == "Question Answering":
 
-    st.subheader("❓ Question Answering")
-
     context = st.text_area(
         "Enter a paragraph",
-        height=200,
-        placeholder=(
-            "Python is a popular programming language "
-            "used to develop Artificial Intelligence applications."
-        )
+        height=200
     )
 
-    question = st.text_input(
-        "Ask a question",
-        placeholder="Which language is used to develop AI applications?"
-    )
+    question = st.text_input("Enter your question")
 
-    if st.button("Get Answer", use_container_width=True):
+    if st.button("Get Answer"):
 
         if context.strip() and question.strip():
 
             try:
                 with st.spinner("Finding the answer..."):
-
                     model = load_model(task)
-
                     result = model(
                         question=question,
                         context=context
                     )
 
-                st.success("Answer found!")
-                st.info(result["answer"])
-
-                st.caption(
-                    "Confidence Score: "
-                    + str(round(result["score"], 4))
+                st.subheader("Answer")
+                st.success(result["answer"])
+                st.write(
+                    "Confidence:",
+                    round(result["score"], 4)
                 )
 
-            except Exception:
-                st.error(
-                    "Question answering failed. "
-                    "Please check the app logs."
-                )
+            except Exception as e:
+                st.error("Question answering failed.")
+                st.code(str(e))
 
         else:
             st.warning(
-                "Please enter both the paragraph and the question."
+                "Please enter both paragraph and question."
             )
 
 
 st.divider()
-
-st.caption(
-    "Built using Streamlit and Hugging Face Transformers"
-                )
+st.caption("Built with Streamlit and Hugging Face Transformers")
