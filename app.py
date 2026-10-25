@@ -1,23 +1,29 @@
 import streamlit as st
 from google import genai
 
+# Page configuration
 st.set_page_config(
-    page_title="LLM Toolkit",
+    page_title="AI-Powered LLM Toolkit",
     page_icon="🤖",
     layout="centered"
 )
 
-st.title("🤖 LLM Toolkit")
-st.write("AI-powered Text Processing using Gemini")
+# Title
+st.title("🤖 AI-Powered LLM Toolkit")
+st.write("Perform AI tasks using Google's Gemini API.")
 
-# Get Gemini API Key from Streamlit Secrets
+# Connect to Gemini
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
 except Exception:
-    st.error("Gemini API key missing! Check Streamlit Secrets.")
+    st.error(
+        "Gemini API key is missing. "
+        "Please check Settings → Secrets."
+    )
     st.stop()
 
+# Select AI task
 task = st.selectbox(
     "Choose a Task",
     [
@@ -28,63 +34,65 @@ task = st.selectbox(
     ]
 )
 
-if task == "Text Summarization":
-    text = st.text_area("Enter text to summarize")
+# Input fields
+text = st.text_area("Enter your text")
 
-elif task == "Sentiment Analysis":
-    text = st.text_area("Enter text for sentiment analysis")
+question = ""
+language = "English"
 
-elif task == "Question Answering":
-    text = st.text_area("Enter context or passage")
+if task == "Question Answering":
     question = st.text_input("Enter your question")
 
-else:
-    text = st.text_area("Enter text to translate")
+elif task == "Text Translation":
     language = st.selectbox(
-        "Translate into",
+        "Select Target Language",
         ["English", "Tamil", "Hindi", "French", "Spanish"]
     )
 
+# Generate response
 if st.button("Generate"):
     if not text.strip():
         st.warning("Please enter some text.")
+    elif task == "Question Answering" and not question.strip():
+        st.warning("Please enter your question.")
     else:
+        # Create prompt
         if task == "Text Summarization":
-            prompt = f"Summarize the following text clearly:\n{text}"
+            prompt = (
+                "Summarize the following text clearly "
+                "and concisely:\n\n" + text
+            )
 
         elif task == "Sentiment Analysis":
             prompt = (
-                "Analyze the sentiment of this text. "
+                "Analyze the sentiment of the following text. "
                 "Classify it as Positive, Negative, or Neutral "
-                "and explain briefly:\n" + text
+                "and explain briefly:\n\n" + text
             )
 
         elif task == "Question Answering":
-            if not question.strip():
-                st.warning("Please enter a question.")
-                st.stop()
-
             prompt = (
-                f"Answer the question using the context below.\n"
-                f"Context: {text}\n"
-                f"Question: {question}"
+                "Answer the question using the given text.\n\n"
+                "Context: " + text +
+                "\n\nQuestion: " + question
             )
 
         else:
             prompt = (
                 f"Translate the following text into {language}. "
-                f"Return only the translated text:\n{text}"
+                "Return only the translated text:\n\n" + text
             )
 
+        # Call Gemini API
         try:
-            with st.spinner("Generating response..."):
+            with st.spinner("AI is generating your result..."):
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-3.8-flash",
                     contents=prompt
                 )
 
-            st.subheader("Output")
+            st.subheader("✨ Result")
             st.write(response.text)
 
         except Exception as e:
-            st.error(f"API Error: {e}")
+            st.error(f"API Error: {e}") 
