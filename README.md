@@ -15,8 +15,6 @@ The application supports text summarization, sentiment analysis, question answer
 - To analyze sentiment in user-provided text.
 - To answer questions based on the provided context.
 - To translate text into different languages.
-- # Screenshots
-- 
 
 ## Features
 
