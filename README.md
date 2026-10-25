@@ -62,7 +62,7 @@ Provides an interactive interface developed using Streamlit, allowing users to s
 
 ## Project Structure
 
-```text
+
 AI-Powered-LLM-Toolkit/
 |
 |-- app.py
@@ -99,7 +99,7 @@ Step 5: Run the Application
 Start the Streamlit application using the following command.
 streamlit run app.py
 The application will open in your default web browser.
-Deployment
+### Deployment
 The application can be deployed using Streamlit Community Cloud.
 Deployment Steps
 Upload the project files to GitHub.
@@ -114,7 +114,7 @@ After successful deployment, the application can be accessed through its Streaml
 Expected Output
 The application provides four main text-processing tasks.
 Task
-Description
+### Description
 Expected Result
 Text Summarization
 Summarizes lengthy text
@@ -122,13 +122,13 @@ A concise summary
 Sentiment Analysis
 Identifies the sentiment of text
 Positive, Negative, or Neutral classification
-# Question Answering
+### Question Answering
 Answers questions using the supplied context
 A relevant answer
-# Text Translation
+### Text Translation
 Translates text into the selected language
 Translated text
-# Applications
+### Applications
 The AI-Powered LLM Toolkit can be used in several areas:
 Educational content summarization
 Customer feedback analysis
@@ -137,7 +137,7 @@ Question-answering systems
 Multilingual communication
 Text analysis and processing
 Language learning support
-# Advantages
+### Advantages
 Simple and user-friendly interface.
 Supports multiple AI-powered text-processing tasks.
 Reduces the time required to summarize lengthy content.
@@ -145,7 +145,7 @@ Helps users understand the sentiment of text.
 Supports question answering based on provided context.
 Provides translation into multiple languages.
 Can be accessed through a web browser after deployment.
-# Limitations
+### Limitations
 Requires an internet connection to access the Gemini API.
 API usage may be subject to rate limits and account-specific quotas.
 Response quality depends on the input and the underlying AI model.
@@ -161,9 +161,9 @@ Improved input validation and error handling.
 Speech-to-text and text-to-speech capabilities.
 File upload support for text analysis.
 Additional AI models and configurable generation settings.
-# Conclusion
+### Conclusion
 The AI-Powered LLM Toolkit demonstrates the integration of Large Language Models into a web-based application using Python, Streamlit, and Google's Gemini API.
 The application provides text summarization, sentiment analysis, question answering, and text translation through a simple interface. It demonstrates the practical application of prompt engineering, API integration, natural language processing, and cloud deployment.
 This project provides a foundation for developing more advanced AI-powered applications that simplify text-processing tasks and improve user productivity.
-# Author
+### Author
 Developed as an AI and Large Language Model application project.
