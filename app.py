@@ -1,92 +1,90 @@
 import streamlit as st
-import requests
+from google import genai
 
 st.set_page_config(
-    page_title="Hugging Face LLM Toolkit",
+    page_title="LLM Toolkit",
     page_icon="🤖",
-    layout="wide"
+    layout="centered"
 )
 
-st.title("🤖 Hugging Face LLM Toolkit")
-st.write("Summarization, Translation, Sentiment Analysis, and Question Answering")
+st.title("🤖 LLM Toolkit")
+st.write("AI-powered Text Processing using Gemini")
 
-HF_TOKEN = st.secrets.get("HF_TOKEN", "")
+# Get Gemini API Key from Streamlit Secrets
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+    client = genai.Client(api_key=api_key)
+except Exception:
+    st.error("Gemini API key missing! Check Streamlit Secrets.")
+    st.stop()
 
-TASKS = {
-    "Summarization": "facebook/bart-large-cnn",
-    "Translation (English to French)": "Helsinki-NLP/opus-mt-en-fr",
-    "Sentiment Analysis": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
-    "Question Answering": "deepset/roberta-base-squad2"
-}
-
-task = st.selectbox("Choose a task", list(TASKS.keys()))
-
-text = st.text_area(
-    "Enter your text",
-    placeholder="Paste your paragraph here..."
+task = st.selectbox(
+    "Choose a Task",
+    [
+        "Text Summarization",
+        "Sentiment Analysis",
+        "Question Answering",
+        "Text Translation"
+    ]
 )
 
-question = ""
+if task == "Text Summarization":
+    text = st.text_area("Enter text to summarize")
 
-if task == "Question Answering":
+elif task == "Sentiment Analysis":
+    text = st.text_area("Enter text for sentiment analysis")
+
+elif task == "Question Answering":
+    text = st.text_area("Enter context or passage")
     question = st.text_input("Enter your question")
 
-if st.button("Run Task", type="primary"):
+else:
+    text = st.text_area("Enter text to translate")
+    language = st.selectbox(
+        "Translate into",
+        ["English", "Tamil", "Hindi", "French", "Spanish"]
+    )
+
+if st.button("Generate"):
     if not text.strip():
         st.warning("Please enter some text.")
-    elif task == "Question Answering" and not question.strip():
-        st.warning("Please enter a question.")
-    elif not HF_TOKEN:
-        st.error("HF_TOKEN is missing. Add your Hugging Face token in Streamlit Secrets.")
     else:
-        model = TASKS[task]
+        if task == "Text Summarization":
+            prompt = f"Summarize the following text clearly:\n{text}"
 
-        url = f"https://router.huggingface.co/hf-inference/models/{model}"
+        elif task == "Sentiment Analysis":
+            prompt = (
+                "Analyze the sentiment of this text. "
+                "Classify it as Positive, Negative, or Neutral "
+                "and explain briefly:\n" + text
+            )
 
-        headers = {
-            "Authorization": f"Bearer {HF_TOKEN}",
-            "Content-Type": "application/json"
-        }
+        elif task == "Question Answering":
+            if not question.strip():
+                st.warning("Please enter a question.")
+                st.stop()
 
-        if task == "Question Answering":
-            payload = {
-                "inputs": {
-                    "question": question,
-                    "context": text
-                }
-            }
+            prompt = (
+                f"Answer the question using the context below.\n"
+                f"Context: {text}\n"
+                f"Question: {question}"
+            )
+
         else:
-            payload = {"inputs": text}
+            prompt = (
+                f"Translate the following text into {language}. "
+                f"Return only the translated text:\n{text}"
+            )
 
         try:
-            with st.spinner("Processing..."):
-                response = requests.post(
-                    url,
-                    headers=headers,
-                    json=payload,
-                    timeout=90
+            with st.spinner("Generating response..."):
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
                 )
 
-            if response.ok:
-                result = response.json()
-                st.subheader("Result")
+            st.subheader("Output")
+            st.write(response.text)
 
-                if task == "Summarization":
-                    st.write(result[0]["summary_text"])
-                elif task == "Translation (English to French)":
-                    st.write(result[0]["translation_text"])
-                elif task == "Sentiment Analysis":
-                    st.write(result)
-                else:
-                    st.write("Answer:", result.get("answer", "No answer found"))
-                    st.write("Confidence:", result.get("score", "N/A"))
-
-            else:
-                st.error(f"API Error ({response.status_code})")
-                st.write(response.text)
-
-        except requests.exceptions.RequestException as error:
-            st.error(f"Connection error: {error}")
-
-st.divider()
-st.caption("Built using Python, Streamlit, and Hugging Face Inference API.")
+        except Exception as e:
+            st.error(f"API Error: {e}")
