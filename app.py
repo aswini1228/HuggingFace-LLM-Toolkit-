@@ -1,196 +1,92 @@
 import streamlit as st
-from transformers import pipeline
+import requests
 
 st.set_page_config(
-    page_title="LLM Text Toolkit",
-    page_icon="🤖"
+    page_title="Hugging Face LLM Toolkit",
+    page_icon="🤖",
+    layout="wide"
 )
 
-st.title("🤖 LLM Text Toolkit")
-st.write("Hugging Face Pipelines")
-st.write(
-    "Summarization | Translation | "
-    "Sentiment Analysis | Question Answering"
+st.title("🤖 Hugging Face LLM Toolkit")
+st.write("Summarization, Translation, Sentiment Analysis, and Question Answering")
+
+HF_TOKEN = st.secrets.get("HF_TOKEN", "")
+
+TASKS = {
+    "Summarization": "facebook/bart-large-cnn",
+    "Translation (English to French)": "Helsinki-NLP/opus-mt-en-fr",
+    "Sentiment Analysis": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+    "Question Answering": "deepset/roberta-base-squad2"
+}
+
+task = st.selectbox("Choose a task", list(TASKS.keys()))
+
+text = st.text_area(
+    "Enter your text",
+    placeholder="Paste your paragraph here..."
 )
 
-st.divider()
+question = ""
 
-task = st.selectbox(
-    "Choose a task",
-    [
-        "Summarization",
-        "Translation",
-        "Sentiment Analysis",
-        "Question Answering"
-    ]
-)
-
-
-@st.cache_resource
-def load_model(task_name):
-
-    if task_name == "Summarization":
-        return pipeline(
-            "summarization",
-            model="sshleifer/distilbart-cnn-12-6"
-        )
-
-    elif task_name == "Translation":
-        return pipeline(
-            "translation",
-            model="Helsinki-NLP/opus-mt-en-fr"
-        )
-
-    elif task_name == "Sentiment Analysis":
-        return pipeline(
-            "sentiment-analysis",
-            model=(
-                "distilbert/"
-                "distilbert-base-uncased-finetuned-sst-2-english"
-            )
-        )
-
-    elif task_name == "Question Answering":
-        return pipeline(
-            "question-answering",
-            model=(
-                "distilbert/"
-                "distilbert-base-cased-distilled-squad"
-            )
-        )
-
-
-if task == "Summarization":
-
-    text = st.text_area(
-        "Enter a paragraph",
-        height=200
-    )
-
-    if st.button("Summarize"):
-
-        if text.strip():
-
-            try:
-                with st.spinner("Summarizing..."):
-                    model = load_model(task)
-                    result = model(
-                        text,
-                        max_length=100,
-                        min_length=20,
-                        do_sample=False,
-                        truncation=True
-                    )
-
-                st.subheader("Summary")
-                st.write(result[0]["summary_text"])
-
-            except Exception as e:
-                st.error("Summarization failed.")
-                st.code(str(e))
-
-        else:
-            st.warning("Please enter a paragraph.")
-
-
-elif task == "Translation":
-
-    text = st.text_area(
-        "Enter English text",
-        height=150
-    )
-
-    if st.button("Translate"):
-
-        if text.strip():
-
-            try:
-                with st.spinner("Translating..."):
-                    model = load_model(task)
-                    result = model(
-                        text,
-                        max_length=200
-                    )
-
-                st.subheader("French Translation")
-                st.write(result[0]["translation_text"])
-
-            except Exception as e:
-                st.error("Translation failed.")
-                st.code(str(e))
-
-        else:
-            st.warning("Please enter text.")
-
-
-elif task == "Sentiment Analysis":
-
-    text = st.text_area(
-        "Enter a sentence",
-        height=120
-    )
-
-    if st.button("Analyze Sentiment"):
-
-        if text.strip():
-
-            try:
-                with st.spinner("Analyzing..."):
-                    model = load_model(task)
-                    result = model(text)
-
-                st.subheader("Sentiment")
-                st.write("Label:", result[0]["label"])
-                st.write(
-                    "Confidence:",
-                    round(result[0]["score"], 4)
-                )
-
-            except Exception as e:
-                st.error("Sentiment analysis failed.")
-                st.code(str(e))
-
-        else:
-            st.warning("Please enter a sentence.")
-
-
-elif task == "Question Answering":
-
-    context = st.text_area(
-        "Enter a paragraph",
-        height=200
-    )
-
+if task == "Question Answering":
     question = st.text_input("Enter your question")
 
-    if st.button("Get Answer"):
+if st.button("Run Task", type="primary"):
+    if not text.strip():
+        st.warning("Please enter some text.")
+    elif task == "Question Answering" and not question.strip():
+        st.warning("Please enter a question.")
+    elif not HF_TOKEN:
+        st.error("HF_TOKEN is missing. Add your Hugging Face token in Streamlit Secrets.")
+    else:
+        model = TASKS[task]
 
-        if context.strip() and question.strip():
+        url = f"https://router.huggingface.co/hf-inference/models/{model}"
 
-            try:
-                with st.spinner("Finding the answer..."):
-                    model = load_model(task)
-                    result = model(
-                        question=question,
-                        context=context
-                    )
+        headers = {
+            "Authorization": f"Bearer {HF_TOKEN}",
+            "Content-Type": "application/json"
+        }
 
-                st.subheader("Answer")
-                st.success(result["answer"])
-                st.write(
-                    "Confidence:",
-                    round(result["score"], 4)
+        if task == "Question Answering":
+            payload = {
+                "inputs": {
+                    "question": question,
+                    "context": text
+                }
+            }
+        else:
+            payload = {"inputs": text}
+
+        try:
+            with st.spinner("Processing..."):
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=90
                 )
 
-            except Exception as e:
-                st.error("Question answering failed.")
-                st.code(str(e))
+            if response.ok:
+                result = response.json()
+                st.subheader("Result")
 
-        else:
-            st.warning(
-                "Please enter both paragraph and question."
-            )
+                if task == "Summarization":
+                    st.write(result[0]["summary_text"])
+                elif task == "Translation (English to French)":
+                    st.write(result[0]["translation_text"])
+                elif task == "Sentiment Analysis":
+                    st.write(result)
+                else:
+                    st.write("Answer:", result.get("answer", "No answer found"))
+                    st.write("Confidence:", result.get("score", "N/A"))
 
+            else:
+                st.error(f"API Error ({response.status_code})")
+                st.write(response.text)
+
+        except requests.exceptions.RequestException as error:
+            st.error(f"Connection error: {error}")
 
 st.divider()
-st.caption("Built with Streamlit and Hugging Face Transformers")
+st.caption("Built using Python, Streamlit, and Hugging Face Inference API.")
